@@ -1,0 +1,26 @@
+"use client";
+// TEMPORARY benchmark: naive client list (state in parent, no memo, no debounce, no virtualization).
+import { useState } from "react";
+import type { ListingRowData } from "@/lib/dashboard-types";
+
+export function Naive({ rows }: { rows: ListingRowData[] }) {
+  const [q, setQ] = useState("");
+  const visible = rows.filter((r) => r.title.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div>
+      <input aria-label="naive search" value={q} onChange={(e) => setQ(e.target.value)} className="mb-3 h-11 w-full rounded-xl border border-line px-3" placeholder="Search…" />
+      <ul className="space-y-3">
+        {visible.map((r) => <Row key={r.id} r={r} />)}
+      </ul>
+    </div>
+  );
+}
+function Row({ r }: { r: ListingRowData }) {
+  return (
+    <li className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3">
+      <span className="h-16 w-16 rounded-xl bg-brand-50" />
+      <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{r.title}</span><span className="text-xs text-muted">{r.status} · {r.priceLabel} · {r.viewCount} views · {r.ageLabel}</span></span>
+      <button className="rounded-full border px-3 py-1 text-sm">Edit</button><button className="rounded-full border px-3 py-1 text-sm">Mark sold</button><button className="rounded-full px-3 py-1 text-sm text-red-600">Delete</button>
+    </li>
+  );
+}

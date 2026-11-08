@@ -1,0 +1,69 @@
+   ▲ Next.js 15.5.27
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · cpus: 1
+     · serverActions
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 24.2s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/35) ...
+   Generating static pages (8/35) 
+   Generating static pages (17/35) 
+   Generating static pages (26/35) 
+ ✓ Generating static pages (35/35)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      956 B         124 kB
+├ ƒ /_not-found                            178 B         103 kB
+├ ƒ /about                                 179 B         106 kB
+├ ƒ /account                             5.02 kB         125 kB
+├ ƒ /admin                                 179 B         106 kB
+├ ƒ /admin/categories                      178 B         103 kB
+├ ƒ /admin/listings                        176 B         112 kB
+├ ƒ /admin/reports                         179 B         106 kB
+├ ƒ /admin/sellers                         179 B         106 kB
+├ ƒ /admin/users                         3.59 kB         130 kB
+├ ƒ /adopt                                 135 B         125 kB
+├ ƒ /api/adoption-requests                 178 B         103 kB
+├ ƒ /api/auth/[...nextauth]                178 B         103 kB
+├ ƒ /api/conversations                     178 B         103 kB
+├ ƒ /api/conversations/[id]/messages       178 B         103 kB
+├ ƒ /api/listings                          178 B         103 kB
+├ ƒ /api/listings/[id]                     178 B         103 kB
+├ ƒ /api/orders                            178 B         103 kB
+├ ƒ /api/reports                           178 B         103 kB
+├ ƒ /api/uploads/sign                      178 B         103 kB
+├ ƒ /category/[slug]                       135 B         125 kB
+├ ƒ /cats                                  135 B         125 kB
+├ ƒ /dashboard                           5.93 kB         138 kB
+├ ƒ /dashboard/listings/[id]/edit          138 B         127 kB
+├ ƒ /dashboard/orders                    1.49 kB         108 kB
+├ ƒ /dashboard/shop                      1.76 kB         108 kB
+├ ƒ /listing/[slug]                      3.36 kB         129 kB
+├ ƒ /login                               3.74 kB         119 kB
+├ ƒ /messages                             1.5 kB         113 kB
+├ ƒ /messages/[id]                       3.97 kB         119 kB
+├ ƒ /privacy                               178 B         103 kB
+├ ƒ /register                            3.77 kB         119 kB
+├ ○ /robots.txt                            178 B         103 kB
+├ ƒ /safety                                178 B         103 kB
+├ ƒ /search                                135 B         125 kB
+├ ƒ /sell/new                              138 B         127 kB
+├ ƒ /seller/[username]                   2.22 kB         126 kB
+├ ƒ /shop                                  136 B         125 kB
+├ ƒ /sitemap.xml                           178 B         103 kB
+├ ƒ /terms                                 179 B         106 kB
+└ ƒ /verify                              3.96 kB         119 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/1255-5cd2fe06309409a0.js      46.5 kB
+  ├ chunks/4bd1b696-f785427dddbba9fb.js  54.2 kB
+  └ other shared chunks (total)           2.1 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

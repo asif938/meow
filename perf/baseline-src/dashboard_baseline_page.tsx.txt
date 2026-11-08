@@ -1,0 +1,37 @@
+// TEMPORARY: original (pre-optimisation) dashboard list markup, fed with the same synthetic rows, for before/after measurement.
+import Link from "next/link";
+import { Eye } from "lucide-react";
+import { setListingStatusAction } from "@/actions/listings";
+import { demoListings } from "@/lib/perf-data";
+import { Badge, buttonClass } from "@/components/ui";
+import { Naive } from "./naive";
+import { ConfirmButton } from "@/components/confirm-button";
+
+const TONE = { draft: "gray", pending: "amber", active: "green", sold: "blue", adopted: "teal", rejected: "red" } as const;
+
+export default async function Baseline({ searchParams }: { searchParams: Promise<{ demo?: string; mode?: string }> }) {
+  const { demo, mode } = await searchParams;
+  const rows = demoListings(Number(demo) || 1500);
+  if (mode === "naive") return <Naive rows={rows} />;
+  return (
+    <ul className="space-y-3">
+      {rows.map((r) => (
+        <li key={r.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-3 sm:flex-row sm:items-center">
+          <Link href={`/listing/${r.slug}`} className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand-50" />
+            <span className="min-w-0">
+              <span className="flex flex-wrap items-center gap-2"><Badge tone={TONE[r.status]}>{r.status}</Badge><span className="text-xs capitalize text-muted">{r.type}</span></span>
+              <span className="mt-1 block truncate font-semibold">{r.title}</span>
+              <span className="flex flex-wrap gap-x-3 text-xs text-muted">{r.priceLabel && <span>{r.priceLabel}</span>}<span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{r.viewCount}</span><span>{r.ageLabel}</span></span>
+            </span>
+          </Link>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <Link href={`/dashboard/listings/${r.id}/edit`} className={buttonClass("outline", "sm")}>Edit</Link>
+            <form action={setListingStatusAction}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="action" value="sold" /><button className={buttonClass("secondary", "sm")}>Mark sold</button></form>
+            <form action={setListingStatusAction}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="action" value="delete" /><ConfirmButton message="Delete?" className={buttonClass("ghost", "sm", "text-red-600")}>Delete</ConfirmButton></form>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}

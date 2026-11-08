@@ -1,0 +1,579 @@
+// Prisma schema for Meow.
+//
+// Table/column names intentionally match the original Drizzle schema (snake_case), so an
+// existing database keeps working. Things Prisma can't express natively (the generated
+// `search` tsvector column, CHECK constraints, the pg_trgm extension) live in the hand-edited
+// SQL of the initial migration — see prisma/migrations/0_init/migration.sql.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Enums
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum UserStatus {
+  active
+  banned
+
+  @@map("user_status")
+}
+
+enum Role {
+  buyer
+  seller
+  business
+  shelter
+  admin
+
+  @@map("role")
+}
+
+enum SellerType {
+  individual
+  business
+  shelter
+
+  @@map("seller_type")
+}
+
+enum VerificationStatus {
+  none
+  pending
+  approved
+  rejected
+
+  @@map("verification_status")
+}
+
+enum ListingType {
+  cat
+  supply
+  adoption
+
+  @@map("listing_type")
+}
+
+enum ListingCondition {
+  new
+  used
+
+  @@map("listing_condition")
+}
+
+enum ListingStatus {
+  draft
+  pending
+  active
+  sold
+  adopted
+  rejected
+
+  @@map("listing_status")
+}
+
+enum CatGender {
+  male
+  female
+
+  @@map("cat_gender")
+}
+
+enum RequestStatus {
+  pending
+  approved
+  rejected
+  completed
+  cancelled
+
+  @@map("request_status")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  shipped
+  delivered
+  cancelled
+
+  @@map("order_status")
+}
+
+enum PaymentMethod {
+  cod
+  bkash
+  nagad
+  sslcommerz
+
+  @@map("payment_method")
+}
+
+enum ReportTarget {
+  listing
+  user
+
+  @@map("report_target")
+}
+
+enum ReportStatus {
+  open
+  resolved
+  dismissed
+
+  @@map("report_status")
+}
+
+enum OtpChannel {
+  phone
+  email
+
+  @@map("otp_channel")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Users & roles
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model User {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  username        String     @unique
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String?    @map("password_hash")
+  avatar          String?
+  isEmailVerified Boolean    @default(false) @map("is_email_verified")
+  isPhoneVerified Boolean    @default(false) @map("is_phone_verified")
+  status          UserStatus @default(active)
+  banReason       String?    @map("ban_reason")
+  locationId      String?    @map("location_id") @db.Uuid
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  location         Location?         @relation(fields: [locationId], references: [id], onDelete: NoAction)
+  roles            UserRole[]
+  sellerProfile    SellerProfile?
+  listings         Listing[]
+  otpCodes         OtpCode[]
+  buyerChats       Conversation[]    @relation("ConversationBuyer")
+  sellerChats      Conversation[]    @relation("ConversationSeller")
+  messages         Message[]
+  adoptionRequests AdoptionRequest[]
+  buyerOrders      Order[]           @relation("OrderBuyer")
+  sellerOrders     Order[]           @relation("OrderSeller")
+  wishlists        Wishlist[]
+  reviewsWritten   Review[]          @relation("ReviewReviewer")
+  reviewsReceived  Review[]          @relation("ReviewSeller")
+  reports          Report[]
+  auditLogs        AuditLog[]
+
+  @@index([status], map: "users_status_idx")
+  @@map("users")
+}
+
+model UserRole {
+  userId    String   @map("user_id") @db.Uuid
+  role      Role
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@map("user_roles")
+}
+
+model SellerProfile {
+  userId             String             @id @map("user_id") @db.Uuid
+  type               SellerType         @default(individual)
+  shopName           String?            @map("shop_name")
+  slug               String?            @unique
+  bio                String?
+  tradeLicenseUrl    String?            @map("trade_license_url")
+  nidUrl             String?            @map("nid_url")
+  orgProofUrl        String?            @map("org_proof_url")
+  verificationStatus VerificationStatus @default(none) @map("verification_status")
+  rejectionReason    String?            @map("rejection_reason")
+  verifiedAt         DateTime?          @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("seller_profiles")
+}
+
+model OtpCode {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String     @map("user_id") @db.Uuid
+  channel    OtpChannel
+  target     String
+  codeHash   String     @map("code_hash")
+  attempts   Int        @default(0) @db.SmallInt
+  expiresAt  DateTime   @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime?  @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt], map: "otp_user_idx")
+  @@map("otp_codes")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Taxonomy
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model Category {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId          String?            @map("parent_id") @db.Uuid
+  name              String
+  nameBn            String?            @map("name_bn")
+  slug              String             @unique
+  icon              String?
+  listingType       ListingType        @map("listing_type")
+  allowedConditions ListingCondition[] @default([]) @map("allowed_conditions")
+  businessOnly      Boolean            @default(false) @map("business_only")
+  requiresExpiry    Boolean            @default(false) @map("requires_expiry")
+  position          Int                @default(0)
+  isActive          Boolean            @default(true) @map("is_active")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: NoAction)
+  children Category[] @relation("CategoryTree")
+  listings Listing[]
+
+  @@index([parentId], map: "categories_parent_idx")
+  @@map("categories")
+}
+
+model Location {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  division  String
+  district  String
+  area      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users    User[]
+  listings Listing[]
+
+  @@unique([division, district, area], map: "locations_unique_idx")
+  @@map("locations")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Listings
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model Listing {
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId        String                   @map("seller_id") @db.Uuid
+  categoryId      String                   @map("category_id") @db.Uuid
+  type            ListingType
+  condition       ListingCondition?
+  title           String
+  slug            String                   @unique
+  description     String?
+  /// Whole taka (BDT). Never a float.
+  price           Int                      @default(0)
+  isNegotiable    Boolean                  @default(false) @map("is_negotiable")
+  stock           Int                      @default(1)
+  status          ListingStatus            @default(pending)
+  rejectionReason String?                  @map("rejection_reason")
+  locationId      String?                  @map("location_id") @db.Uuid
+  attributes      Json                     @default("{}")
+  videoUrl        String?                  @map("video_url")
+  viewCount       Int                      @default(0) @map("view_count")
+  isFeatured      Boolean                  @default(false) @map("is_featured")
+  /// GENERATED ALWAYS AS (to_tsvector(...)) STORED — defined in the migration SQL, read via raw queries only.
+  search          Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(description, ''::text)))"))
+  publishedAt     DateTime?                @map("published_at") @db.Timestamptz(6)
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  seller           User              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category         Category          @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+  location         Location?         @relation(fields: [locationId], references: [id], onDelete: NoAction)
+  catDetails       CatDetails?
+  images           ListingImage[]
+  conversations    Conversation[]
+  adoptionRequests AdoptionRequest[]
+  orderItems       OrderItem[]
+  wishlists        Wishlist[]
+
+  @@index([status, categoryId, createdAt(sort: Desc)], map: "listings_status_cat_idx")
+  @@index([sellerId], map: "listings_seller_idx")
+  @@index([locationId], map: "listings_location_idx")
+  @@index([type, status], map: "listings_type_status_idx")
+  @@index([search], map: "listings_search_idx", type: Gin)
+  @@index([attributes], map: "listings_attributes_idx", type: Gin)
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "listings_title_trgm_idx", type: Gin)
+  @@map("listings")
+}
+
+model CatDetails {
+  listingId   String    @id @map("listing_id") @db.Uuid
+  breed       String
+  ageMonths   Int       @map("age_months")
+  gender      CatGender
+  color       String?
+  vaccinated  Boolean   @default(false)
+  vaccineNote String?   @map("vaccine_note")
+  neutered    Boolean   @default(false)
+  healthNote  String    @map("health_note")
+  adoptionFee Int       @default(0) @map("adoption_fee")
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("cat_details")
+}
+
+model ListingImage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  url       String
+  publicId  String?  @map("public_id")
+  /// Content hash (Cloudinary etag) for duplicate-photo detection.
+  hash      String?
+  position  Int      @default(0)
+  isCover   Boolean  @default(false) @map("is_cover")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId], map: "listing_images_listing_idx")
+  @@index([hash], map: "listing_images_hash_idx")
+  @@map("listing_images")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Chat
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model Conversation {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId     String?  @map("listing_id") @db.Uuid
+  buyerId       String   @map("buyer_id") @db.Uuid
+  sellerId      String   @map("seller_id") @db.Uuid
+  lastMessageAt DateTime @default(now()) @map("last_message_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listing  Listing?  @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  buyer    User      @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller   User      @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([listingId, buyerId], map: "conversations_listing_buyer_idx")
+  @@index([buyerId, lastMessageAt(sort: Desc)], map: "conversations_buyer_idx")
+  @@index([sellerId, lastMessageAt(sort: Desc)], map: "conversations_seller_idx")
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderId       String    @map("sender_id") @db.Uuid
+  body           String
+  /// Contains phone numbers / links → UI shows an off-platform warning.
+  flagged        Boolean   @default(false)
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt], map: "messages_conversation_idx")
+  @@map("messages")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Adoption
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model AdoptionRequest {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId   String        @map("listing_id") @db.Uuid
+  requesterId String        @map("requester_id") @db.Uuid
+  message     String
+  /// { homeType: string; otherPets: string; experience: string; phone?: string }
+  homeInfo    Json          @map("home_info")
+  status      RequestStatus @default(pending)
+  ownerNote   String?       @map("owner_note")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  requester User    @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  review    Review?
+
+  @@unique([listingId, requesterId], map: "adoption_requests_unique_idx")
+  @@index([listingId, status], map: "adoption_requests_listing_idx")
+  @@map("adoption_requests")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Orders (COD)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model Order {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyerId       String        @map("buyer_id") @db.Uuid
+  sellerId      String        @map("seller_id") @db.Uuid
+  /// { name: string; phone: string; line: string; district: string; note?: string }
+  address       Json
+  paymentMethod PaymentMethod @default(cod) @map("payment_method")
+  total         Int
+  status        OrderStatus   @default(pending)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  buyer  User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: NoAction)
+  seller User        @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: NoAction)
+  items  OrderItem[]
+  review Review?
+
+  @@index([buyerId, createdAt(sort: Desc)], map: "orders_buyer_idx")
+  @@index([sellerId, createdAt(sort: Desc)], map: "orders_seller_idx")
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String  @map("order_id") @db.Uuid
+  listingId String? @map("listing_id") @db.Uuid
+  title     String
+  /// Snapshot of the unit price at the time of order.
+  price     Int
+  quantity  Int     @default(1)
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@map("order_items")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Engagement & trust
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model Wishlist {
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+  @@map("wishlists")
+}
+
+model Review {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String?  @unique(map: "reviews_order_idx") @map("order_id") @db.Uuid
+  adoptionRequestId String?  @unique(map: "reviews_adoption_idx") @map("adoption_request_id") @db.Uuid
+  reviewerId        String   @map("reviewer_id") @db.Uuid
+  sellerId          String   @map("seller_id") @db.Uuid
+  rating            Int      @db.SmallInt
+  comment           String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  order           Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  adoptionRequest AdoptionRequest? @relation(fields: [adoptionRequestId], references: [id], onDelete: SetNull)
+  reviewer        User             @relation("ReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  seller          User             @relation("ReviewSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId], map: "reviews_seller_idx")
+  @@map("reviews")
+}
+
+model Report {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId     String       @map("reporter_id") @db.Uuid
+  targetType     ReportTarget @map("target_type")
+  targetId       String       @map("target_id") @db.Uuid
+  reason         String
+  details        String?
+  status         ReportStatus @default(open)
+  resolutionNote String?      @map("resolution_note")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt(sort: Desc)], map: "reports_status_idx")
+  @@map("reports")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  targetType String   @map("target_type")
+  targetId   String?  @map("target_id") @db.Uuid
+  meta       Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)], map: "audit_logs_created_idx")
+  @@map("audit_logs")
+}

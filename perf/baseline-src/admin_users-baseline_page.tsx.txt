@@ -1,0 +1,12 @@
+// TEMPORARY: original un-virtualised users table markup with 1,500 synthetic users, for before/after measurement.
+import { demoUsers } from "@/lib/perf-data";
+export default async function B({ searchParams }: { searchParams: Promise<{ demo?: string }> }) {
+  const { demo } = await searchParams;
+  return (
+    <table className="w-full text-left text-sm"><tbody>
+      {demoUsers(Number(demo) || 1500).map((u) => (
+        <tr key={u.id} className="border-b"><td className="px-4 py-3">{u.name}<p className="text-xs">{u.email} · {u.phone}</p></td><td>{u.roles}</td><td>{u.seller}</td><td>{u.joined}</td><td>{u.status}</td><td><input className="h-8 w-28 border" placeholder="Reason" /><button className="px-2">Ban</button></td></tr>
+      ))}
+    </tbody></table>
+  );
+}
