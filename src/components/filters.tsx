@@ -168,7 +168,7 @@ export function Filters(props: Props) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block">
-        <form action={props.basePath} className="sticky top-24 rounded-[var(--radius-card)] border border-line bg-white p-5">
+        <form action={props.basePath} className="sticky top-24 rounded-xl border border-line bg-surface p-5">
           <p className="mb-4 flex items-center gap-2 font-semibold">
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </p>

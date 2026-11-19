@@ -62,6 +62,7 @@ export type ListingCard = {
   id: string;
   slug: string;
   title: string;
+  description: string | null;
   type: ListingType;
   condition: ListingCondition | null;
   price: number;
@@ -169,6 +170,7 @@ export async function searchListings(f: ListingFilters) {
       l.id,
       l.slug,
       l.title,
+      left(l.description, 180) as description,
       l.type,
       l.condition,
       l.price,

@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: <html class="dark"> (set by the theme script in layout.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens
+ * - Primary palette: brand orange (actions), teal (adoption / secondary), neutral ink (text, surfaces).
+ * - Semantic colours (red/green/amber/sky) are only used for status feedback.
+ * - Spacing follows Tailwind's 4px grid. Radius is unified: --radius-card = rounded-xl.
+ */
 @theme {
   --color-brand-50: #fff7ed;
   --color-brand-100: #ffedd5;
@@ -14,24 +23,88 @@
   --color-muted: #6b625c;
   --color-line: #ece5df;
   --color-cream: #fffaf5;
+  --color-surface: #ffffff;
+  /* Always-dark panel (trust strips, footers) — does not flip in dark mode. */
+  --color-night: #1f1a17;
   --font-sans: var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-app), var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
-  --radius-card: 1.25rem;
+  --radius-card: 0.75rem;
+}
+
+/* Dark mode: swap neutrals and re-tint the light 50/100 shades so existing utilities keep working. */
+.dark {
+  color-scheme: dark;
+  --color-ink: #f5efe9;
+  --color-muted: #b8aca2;
+  --color-line: #3a322d;
+  --color-cream: #161210;
+  --color-surface: #211c19;
+
+  --color-brand-50: #2b1a0e;
+  --color-brand-100: #3b2312;
+  --color-brand-200: #5a3519;
+  --color-brand-300: #e8924f;
+  --color-brand-700: #fdba74;
+
+  --color-teal-50: #10302c;
+  --color-teal-100: #14413b;
+  --color-teal-700: #5eead4;
+  --color-teal-800: #99f6e4;
+
+  --color-emerald-50: #0f2d22;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+
+  --color-red-50: #381717;
+  --color-red-200: #7f1d1d;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+
+  --color-amber-50: #2e2410;
+  --color-amber-200: #78561a;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+
+  --color-sky-50: #0e2433;
+  --color-sky-200: #1e4a66;
+  --color-sky-700: #7dd3fc;
+  --color-sky-900: #bae6fd;
+
+  --color-stone-50: #26211e;
+  --color-stone-100: #302925;
+  --color-stone-200: #3a322d;
+  --color-stone-300: #d6cdc5;
+  --color-stone-700: #d6cdc5;
 }
 
 html {
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   background: var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  overflow-x: clip;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @utility container-page {
@@ -44,9 +117,54 @@ body {
   }
 }
 
+/* Full-bleed container used by the navbar. */
+@utility container-wide {
+  width: 100%;
+  padding-inline: 1rem;
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
+}
+
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Typography scale: one place to tune headings across the site. */
+@utility text-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  @media (width >= 40rem) {
+    font-size: 3.25rem;
+  }
+}
+@utility text-h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  @media (width >= 40rem) {
+    font-size: 1.875rem;
+  }
+}
+@utility text-h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+@utility text-lead {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-muted);
+  @media (width >= 40rem) {
+    font-size: 1.125rem;
   }
 }

@@ -21,12 +21,23 @@ export const metadata: Metadata = {
   openGraph: { siteName: SITE.name, type: "website", locale: "en_BD" },
 };
 
-export const viewport: Viewport = { themeColor: "#f97316" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fffaf5" },
+    { media: "(prefers-color-scheme: dark)", color: "#161210" },
+  ],
+};
+
+// Runs before paint so the saved (or system) theme is applied without a flash.
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
   return (
-    <html lang={locale} className={`${sans.variable} ${display.variable}`}>
+    <html lang={locale} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-dvh flex-col antialiased">
         <Header />
         <main className="flex-1">{children}</main>

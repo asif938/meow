@@ -1,82 +1,79 @@
 import Link from "next/link";
+import { ClipboardList, Package, Users, Wallet } from "lucide-react";
 import { db } from "@/db";
-import { timeAgo } from "@/lib/utils";
-import { Card } from "@/components/ui";
+import { adminOverview, mergeSeries } from "@/lib/dashboard-stats";
+import { formatBDT, timeAgo } from "@/lib/utils";
+import { PageHeader } from "@/components/ui";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { BarChartCard, LineChartCard, PieChartCard } from "@/components/charts";
 
 export default async function AdminOverview() {
-  const monthAgo = new Date(Date.now() - 30 * 86_400_000);
-
-  const [pendingListings, pendingSellers, openReports, activeListings, verifiedSellers, totalUsers, ordersMonth, adoptionsMonth, logs] =
-    await Promise.all([
-      db.listing.count({ where: { status: "pending" } }),
-      db.sellerProfile.count({ where: { verificationStatus: "pending" } }),
-      db.report.count({ where: { status: "open" } }),
-      db.listing.count({ where: { status: "active" } }),
-      db.sellerProfile.count({ where: { verificationStatus: "approved" } }),
-      db.user.count(),
-      db.order.count({ where: { createdAt: { gt: monthAgo } } }),
-      db.adoptionRequest.count({ where: { status: "completed", updatedAt: { gt: monthAgo } } }),
-      db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 15 }),
-    ]);
+  const [o, pendingListings, pendingSellers, openReports, unreadMessages, logs] = await Promise.all([
+    adminOverview(),
+    db.listing.count({ where: { status: "pending" } }),
+    db.sellerProfile.count({ where: { verificationStatus: "pending" } }),
+    db.report.count({ where: { status: "open" } }),
+    db.contactMessage.count({ where: { status: "new" } }),
+    db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
+  ]);
 
   const queues = [
-    { label: "Listings awaiting review", n: pendingListings, href: "/admin/listings" },
+    { label: "Listings awaiting review", n: pendingListings, href: "/admin/listings?status=pending" },
     { label: "Seller verifications", n: pendingSellers, href: "/admin/sellers" },
     { label: "Open reports", n: openReports, href: "/admin/reports" },
-  ];
-  const kpis = [
-    { label: "Active listings", n: activeListings, goal: 500 },
-    { label: "Verified sellers", n: verifiedSellers, goal: 50 },
-    { label: "Orders + adoptions (30d)", n: ordersMonth + adoptionsMonth, goal: 100 },
-    { label: "Users", n: totalUsers },
+    { label: "New contact messages", n: unreadMessages, href: "/admin/messages" },
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-3 sm:grid-cols-3">
+    <div className="space-y-6">
+      <PageHeader title="Admin overview" description="Live numbers from the marketplace." />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total items" value={o.items} icon={Package} />
+        <StatCard label="Total users" value={o.users} icon={Users} tone="teal" />
+        <StatCard label="Delivered order value" value={formatBDT(o.revenue)} icon={Wallet} tone="neutral" />
+        <StatCard label="Orders + adoption requests" value={o.activity30} hint="last 30 days" icon={ClipboardList} />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {queues.map((q) => (
-          <Link key={q.href} href={q.href} className="rounded-2xl border border-line bg-white p-5 hover:border-brand-300">
+          <Link key={q.href} href={q.href} className="rounded-xl border border-line bg-surface p-4 transition hover:border-brand-300">
             <p className="text-sm text-muted">{q.label}</p>
             <p className={`font-display text-3xl font-bold ${q.n > 0 ? "text-brand-600" : ""}`}>{q.n}</p>
           </Link>
         ))}
       </div>
 
-      <div>
-        <h2 className="mb-3 font-semibold">MVP success metrics</h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {kpis.map((k) => (
-            <Card key={k.label} className="p-4">
-              <p className="text-xs text-muted">{k.label}</p>
-              <p className="font-display text-2xl font-bold">
-                {k.n}
-                {k.goal && <span className="text-sm font-normal text-muted"> / {k.goal}</span>}
-              </p>
-              {k.goal && (
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-100">
-                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.min(100, (k.n / k.goal) * 100)}%` }} />
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <LineChartCard
+          title="Growth"
+          description="New users and listings per month"
+          data={mergeSeries({ key: "users", points: o.usersMonthly }, { key: "listings", points: o.listingsMonthly })}
+          series={[
+            { key: "users", name: "New users" },
+            { key: "listings", name: "New listings" },
+          ]}
+        />
+        <BarChartCard title="Listings by category" description="Top categories" data={o.byCategory} />
+        <PieChartCard title="Listings by status" data={o.byStatus} />
+        <PieChartCard title="Users by role" data={o.byRole} />
       </div>
 
-      <div>
-        <h2 className="mb-3 font-semibold">Recent admin actions</h2>
+      <section>
+        <h2 className="text-h3 mb-3">Recent admin actions</h2>
         {logs.length === 0 ? (
           <p className="text-sm text-muted">No actions yet.</p>
         ) : (
-          <ul className="divide-y divide-line rounded-2xl border border-line bg-white text-sm">
+          <ul className="divide-y divide-line rounded-xl border border-line bg-surface text-sm">
             {logs.map((l) => (
               <li key={l.id} className="flex justify-between gap-3 px-4 py-2.5">
-                <span><code className="text-xs">{l.action}</code> · {l.targetType} {l.targetId?.slice(0, 8)}</span>
+                <span className="min-w-0 truncate"><code className="text-xs">{l.action}</code> · {l.targetType} {l.targetId?.slice(0, 8)}</span>
                 <span className="shrink-0 text-xs text-muted">{timeAgo(l.createdAt)}</span>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }

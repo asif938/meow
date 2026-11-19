@@ -69,7 +69,7 @@ export default async function SellerOrdersPage() {
         ) : (
           <ul className="space-y-3">
             {requests.map((r) => (
-              <li key={r.id} className="rounded-2xl border border-line bg-white p-4">
+              <li key={r.id} className="rounded-xl border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold">
@@ -122,7 +122,7 @@ export default async function SellerOrdersPage() {
         ) : (
           <ul className="space-y-3">
             {incoming.map((o) => (
-              <li key={o.id} className="rounded-2xl border border-line bg-white p-4">
+              <li key={o.id} className="rounded-xl border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold">Order #{o.id.slice(0, 8)} · {formatBDT(o.total)}</p>

@@ -230,7 +230,7 @@ export async function saveListingAction(raw: unknown, listingId?: string): Promi
   }
   await saveImages(id, input.images);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   revalidatePath(`/listing/${slug}`);
   return { ok: true, slug, status: review.status, note: review.note };
 }
@@ -253,6 +253,17 @@ export async function setListingStatusAction(formData: FormData) {
     await db.listing.update({ where: { id }, data: { status: "draft" } });
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath(`/listing/${listing.slug}`);
+}
+
+/** Permanently deletes one of the current user's listings (used by the table's delete modal). */
+export async function deleteMyListingAction(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id"));
+  const listing = await db.listing.findUnique({ where: { id }, select: { sellerId: true, slug: true } });
+  if (!listing || listing.sellerId !== user.id) throw new Error("Not allowed");
+  await db.listing.delete({ where: { id } });
+  revalidatePath("/dashboard", "layout");
   revalidatePath(`/listing/${listing.slug}`);
 }

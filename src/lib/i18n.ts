@@ -5,6 +5,11 @@ export const locales = ["en", "bn"] as const;
 export type Locale = (typeof locales)[number];
 
 const en = {
+  "nav.home": "Home",
+  "nav.explore": "Explore",
+  "nav.blog": "Blog",
+  "nav.about": "About",
+  "nav.profile": "Profile",
   "nav.cats": "Buy a cat",
   "nav.adopt": "Adopt",
   "nav.shop": "Shop supplies",
@@ -47,6 +52,11 @@ const en = {
 export type MessageKey = keyof typeof en;
 
 const bn: Record<MessageKey, string> = {
+  "nav.home": "হোম",
+  "nav.explore": "এক্সপ্লোর",
+  "nav.blog": "ব্লগ",
+  "nav.about": "আমাদের সম্পর্কে",
+  "nav.profile": "প্রোফাইল",
   "nav.cats": "বিড়াল কিনুন",
   "nav.adopt": "দত্তক নিন",
   "nav.shop": "সামগ্রী কিনুন",

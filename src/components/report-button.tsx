@@ -22,7 +22,7 @@ export function ReportButton({
 
   if (!loggedIn) {
     return (
-      <Link href="/login" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-red-600">
+      <Link href="/login" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-red-600 dark:text-red-400">
         <Flag className="h-4 w-4" /> Report this {targetType}
       </Link>
     );
@@ -32,14 +32,14 @@ export function ReportButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted hover:text-red-600"
+        className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted hover:text-red-600 dark:text-red-400"
       >
         <Flag className="h-4 w-4" /> Report this {targetType}
       </button>
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-end sm:place-items-center" role="dialog" aria-modal="true" aria-label="Report">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+          <div className="relative w-full max-w-md rounded-t-3xl bg-surface p-6 shadow-2xl sm:rounded-3xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold">Report {targetType}</h2>
               <button onClick={() => setOpen(false)} className={buttonClass("ghost", "icon")} aria-label="Close">

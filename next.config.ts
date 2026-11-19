@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  // No console.log/info/debug in production bundles (errors and warnings are kept).
+  compiler: { removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false },
   experimental: {
     serverActions: { bodySizeLimit: "2mb" },
     // Low-RAM machines: `LOW_MEM_BUILD=1 npm run build` avoids spawning parallel build workers.

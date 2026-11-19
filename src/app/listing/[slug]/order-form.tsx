@@ -39,7 +39,7 @@ export function OrderForm({
   }
 
   return (
-    <form id="order" action={action} className="space-y-3 rounded-2xl bg-stone-50 p-4">
+    <form id="order" action={action} className="space-y-3 rounded-xl bg-stone-50 p-4">
       <p className="font-semibold">Cash on delivery</p>
       <input type="hidden" name="listingId" value={listingId} />
       <div>

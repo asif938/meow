@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Heart, Package, ShieldCheck } from "lucide-react";
+import { Heart, Package } from "lucide-react";
 import { db } from "@/db";
 import { requireUser } from "@/lib/session";
 import { searchListings } from "@/lib/queries";
 import { updateOrderStatusAction } from "@/actions/orders";
 import { formatBDT, timeAgo } from "@/lib/utils";
-import { Alert, Badge, Card, EmptyState, PageHeader, buttonClass } from "@/components/ui";
+import { Alert, Badge, EmptyState, PageHeader, buttonClass } from "@/components/ui";
 import { ListingGrid } from "@/components/listing-card";
 import { ReviewForm } from "@/components/review-form";
-import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "My account", robots: { index: false } };
 
@@ -55,42 +54,10 @@ export default async function AccountPage({ searchParams }: Props) {
 
   return (
     <div className="container-page py-8">
-      <PageHeader title="My account" description={user.email} />
+      <PageHeader title="Wishlist & purchases" description="Saved listings, your orders and adoption requests." />
       {verified && <Alert tone="green" className="mb-6">Phone number verified ✓</Alert>}
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-        <div className="space-y-4">
-          <Card className="p-5">
-            <h2 className="mb-4 font-semibold">Profile</h2>
-            <ProfileForm name={user.name} bio={user.sellerProfile?.bio ?? ""} shopName={user.sellerProfile?.shopName ?? ""} hasShop={Boolean(user.sellerProfile)} />
-          </Card>
-          <Card className="space-y-3 p-5 text-sm">
-            <h2 className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" /> Verification</h2>
-            <p className="flex justify-between">
-              <span>Phone</span>
-              {user.isPhoneVerified ? (
-                <span className="text-emerald-700">{user.phone} ✓</span>
-              ) : (
-                <Link href="/verify?next=/account" className="font-semibold text-brand-600">Verify</Link>
-              )}
-            </p>
-            <p className="flex justify-between">
-              <span>Seller ID</span>
-              {user.sellerProfile?.verificationStatus === "approved" ? (
-                <span className="text-emerald-700">Verified ✓</span>
-              ) : user.sellerProfile?.verificationStatus === "pending" ? (
-                <span className="text-muted">In review</span>
-              ) : (
-                <Link href="/dashboard/shop" className="font-semibold text-brand-600">Get verified</Link>
-              )}
-            </p>
-            <p className="flex justify-between">
-              <span>Public profile</span>
-              <Link href={`/seller/${user.username}`} className="text-brand-600">@{user.username}</Link>
-            </p>
-          </Card>
-        </div>
-
+      <div className="grid gap-6">
         <div className="min-w-0 space-y-10">
           <section>
             <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold"><Heart className="h-5 w-5 text-brand-500" /> Wishlist</h2>
@@ -119,7 +86,7 @@ export default async function AccountPage({ searchParams }: Props) {
             ) : (
               <ul className="space-y-3">
                 {myOrders.map((o) => (
-                  <li key={o.id} className="rounded-2xl border border-line bg-white p-4">
+                  <li key={o.id} className="rounded-xl border border-line bg-surface p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold">{o.items.map((i) => `${i.quantity} × ${i.title}`).join(", ")}</p>
@@ -150,7 +117,7 @@ export default async function AccountPage({ searchParams }: Props) {
             ) : (
               <ul className="space-y-3">
                 {myRequests.map((r) => (
-                  <li key={r.id} className="rounded-2xl border border-line bg-white p-4">
+                  <li key={r.id} className="rounded-xl border border-line bg-surface p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <Link href={`/listing/${r.listing.slug}`} className="font-semibold hover:underline">{r.listing.title}</Link>

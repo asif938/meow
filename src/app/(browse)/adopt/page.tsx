@@ -23,7 +23,7 @@ export default async function AdoptPage({ searchParams }: Props) {
       filters={parseFilters(sp)}
       searchParams={sp}
       banner={
-        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-teal-100 bg-teal-50 p-4 text-sm text-teal-900">
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50 p-4 text-sm text-teal-900">
           <HeartHandshake className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
             Adoption is about the right match, not money. Rehoming fees are capped at ৳{RULES.maxAdoptionFee}. If someone

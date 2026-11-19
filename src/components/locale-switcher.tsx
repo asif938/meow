@@ -7,7 +7,7 @@ export function LocaleSwitcher({ locale }: { locale: "en" | "bn" }) {
     <form action={setLocaleAction}>
       <input type="hidden" name="locale" value={next} />
       <button
-        className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-muted hover:bg-brand-50 hover:text-ink"
+        className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-xl px-2.5 text-xs font-semibold text-muted hover:bg-brand-50 hover:text-ink"
         aria-label={next === "bn" ? "বাংলায় দেখুন" : "View in English"}
       >
         <Languages className="h-4 w-4" />

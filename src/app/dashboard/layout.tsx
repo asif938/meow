@@ -1,23 +1,21 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/session";
-import { DashboardNav } from "./dashboard-nav";
+import { SidebarShell, type SidebarItem } from "@/components/dashboard/sidebar-shell";
+
+const ITEMS: SidebarItem[] = [
+  { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
+  { href: "/dashboard/listings", label: "My Items", icon: "items" },
+  { href: "/dashboard/orders", label: "Orders & requests", icon: "orders" },
+  { href: "/account", label: "Wishlist & purchases", icon: "wishlist" },
+  { href: "/dashboard/shop", label: "Shop & verification", icon: "shop" },
+  { href: "/dashboard/profile", label: "Profile", icon: "profile" },
+  { href: "/dashboard/settings", label: "Settings", icon: "settings" },
+];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser("/dashboard");
-  const sp = user.sellerProfile;
   return (
-    <div className="container-page py-6 sm:py-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-muted">Seller dashboard</p>
-          <h1 className="font-display text-2xl font-bold">{sp?.shopName ?? user.name}</h1>
-        </div>
-        <Link href={`/seller/${user.username}`} className="text-sm font-semibold text-brand-600 hover:underline">
-          View public profile →
-        </Link>
-      </div>
-      <DashboardNav />
-      <div className="mt-6">{children}</div>
-    </div>
+    <SidebarShell title="My dashboard" subtitle={user.sellerProfile?.shopName ?? user.name} items={ITEMS}>
+      {children}
+    </SidebarShell>
   );
 }

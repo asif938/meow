@@ -46,21 +46,3 @@ export async function submitVerificationAction(_: ActionState, formData: FormDat
   revalidatePath("/dashboard/shop");
   return { ok: true, message: "Submitted! Our team usually reviews applications within 24 hours." };
 }
-
-export async function updateProfileAction(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser("/account");
-  const name = String(formData.get("name") ?? "").trim();
-  const bio = String(formData.get("bio") ?? "").trim().slice(0, 1000);
-  const shopName = String(formData.get("shopName") ?? "").trim().slice(0, 80);
-  if (name.length < 2) return { error: "Name is too short." };
-
-  await db.user.update({ where: { id: user.id }, data: { name } });
-  if (user.sellerProfile) {
-    await db.sellerProfile.update({
-      where: { userId: user.id },
-      data: { bio: bio || null, ...(shopName ? { shopName } : {}) },
-    });
-  }
-  revalidatePath("/account");
-  return { ok: true, message: "Profile updated." };
-}

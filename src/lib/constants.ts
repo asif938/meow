@@ -2,7 +2,23 @@ export const SITE = {
   name: "Meow",
   tagline: "Bangladesh's marketplace for cats & everything they need",
   currency: "BDT",
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "support@meow.com.bd",
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+880 1700-000000",
+  address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS ?? "Dhaka, Bangladesh",
+  /** Point these at your real pages with NEXT_PUBLIC_*_URL env vars. */
+  social: {
+    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "https://www.facebook.com/",
+    instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/",
+    youtube: process.env.NEXT_PUBLIC_YOUTUBE_URL ?? "https://www.youtube.com/",
+  },
+  /** Demo-login buttons on /login. Turn off in real production with NEXT_PUBLIC_DEMO_LOGIN=false. */
+  demoLogin: process.env.NEXT_PUBLIC_DEMO_LOGIN !== "false",
 };
+
+export const DEMO_ACCOUNTS = [
+  { label: "Demo user", email: "nusrat@meow.com.bd", password: "meow12345" },
+  { label: "Demo admin", email: "admin@meow.com.bd", password: "meow12345" },
+] as const;
 
 /** Animal-welfare and anti-abuse rules (see Trust & Safety plan). */
 export const RULES = {

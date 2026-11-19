@@ -14,7 +14,7 @@ export function Gallery({ images, title, videoUrl }: { images: string[]; title: 
 
   if (images.length === 0) {
     return (
-      <div className="grid aspect-[4/3] place-items-center rounded-[var(--radius-card)] bg-brand-50 text-brand-300">
+      <div className="grid aspect-[4/3] place-items-center rounded-xl bg-brand-50 text-brand-300">
         <Cat className="h-20 w-20" />
       </div>
     );
@@ -25,7 +25,7 @@ export function Gallery({ images, title, videoUrl }: { images: string[]; title: 
   return (
     <div className="space-y-3">
       <div
-        className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-card)] bg-stone-100"
+        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-stone-100"
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") go(-1);
           if (e.key === "ArrowRight") go(1);
@@ -43,14 +43,14 @@ export function Gallery({ images, title, videoUrl }: { images: string[]; title: 
           <>
             <button
               onClick={() => go(-1)}
-              className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-white/90 shadow"
+              className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-surface/90 shadow"
               aria-label="Previous photo"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => go(1)}
-              className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-white/90 shadow"
+              className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-surface/90 shadow"
               aria-label="Next photo"
             >
               <ChevronRight className="h-5 w-5" />
@@ -81,7 +81,7 @@ export function Gallery({ images, title, videoUrl }: { images: string[]; title: 
             href={videoUrl}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="grid h-16 w-20 shrink-0 place-items-center rounded-xl bg-ink text-xs text-white"
+            className="grid h-16 w-20 shrink-0 place-items-center rounded-xl bg-night text-xs text-white"
           >
             <PlayCircle className="h-6 w-6" />
             Video

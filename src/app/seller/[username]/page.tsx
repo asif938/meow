@@ -87,7 +87,7 @@ export default async function SellerPage({ params }: Props) {
           <h2 className="mb-4 font-display text-xl font-bold">Reviews</h2>
           <ul className="grid gap-3 sm:grid-cols-2">
             {recentReviews.map((r) => (
-              <li key={r.id} className="rounded-2xl border border-line bg-white p-4">
+              <li key={r.id} className="rounded-xl border border-line bg-surface p-4">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{r.reviewer.name}</span>
                   <span className="flex" aria-label={`${r.rating} out of 5`}>

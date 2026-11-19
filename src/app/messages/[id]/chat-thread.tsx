@@ -67,7 +67,7 @@ export function ChatThread({ conversationId, meId, initial }: { conversationId: 
   }
 
   return (
-    <div className="flex h-[calc(100dvh-14rem)] min-h-96 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white">
+    <div className="flex h-[calc(100dvh-14rem)] min-h-96 flex-col overflow-hidden rounded-xl border border-line bg-surface">
       <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-900">
         Stay safe: never pay in advance, meet in public, and keep chats on Meow.
       </div>
@@ -79,7 +79,7 @@ export function ChatThread({ conversationId, meId, initial }: { conversationId: 
             <div key={m.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
               <div
                 className={cn(
-                  "max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm",
+                  "max-w-[80%] whitespace-pre-wrap break-words rounded-xl px-3.5 py-2 text-sm",
                   mine ? "rounded-br-md bg-brand-500 text-white" : "rounded-bl-md bg-stone-100 text-ink",
                 )}
               >
@@ -114,7 +114,7 @@ export function ChatThread({ conversationId, meId, initial }: { conversationId: 
           maxLength={2000}
           placeholder="Write a message…"
           aria-label="Message"
-          className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-line bg-stone-50 px-4 py-2.5 text-sm focus:border-brand-300 focus:bg-white focus:outline-none"
+          className="max-h-32 min-h-11 flex-1 resize-none rounded-xl border border-line bg-stone-50 px-4 py-2.5 text-sm focus:border-brand-300 focus:bg-surface focus:outline-none"
         />
         <button
           type="submit"
@@ -125,7 +125,7 @@ export function ChatThread({ conversationId, meId, initial }: { conversationId: 
           <SendHorizontal className="h-5 w-5" />
         </button>
       </form>
-      {error && <p className="px-4 pb-3 text-xs text-red-600">{error}</p>}
+      {error && <p className="px-4 pb-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

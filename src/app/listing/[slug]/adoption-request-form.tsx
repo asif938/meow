@@ -21,7 +21,7 @@ export function AdoptionRequestForm({ listingId }: { listingId: string }) {
   }
 
   return (
-    <form action={action} className="space-y-3 rounded-2xl bg-teal-50/60 p-4">
+    <form action={action} className="space-y-3 rounded-xl bg-teal-50/60 p-4">
       <p className="font-semibold text-teal-900">Adoption request</p>
       <input type="hidden" name="listingId" value={listingId} />
       <div>

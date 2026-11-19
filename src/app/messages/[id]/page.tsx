@@ -30,7 +30,7 @@ export default async function ThreadPage({ params }: Props) {
 
   return (
     <div className="container-page max-w-3xl py-4 sm:py-8">
-      <div className="mb-3 flex items-center gap-3 rounded-2xl border border-line bg-white p-3">
+      <div className="mb-3 flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
         <Link href="/messages" className="grid h-9 w-9 place-items-center rounded-full hover:bg-brand-50" aria-label="Back to inbox">
           <ArrowLeft className="h-5 w-5" />
         </Link>

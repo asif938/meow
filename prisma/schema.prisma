@@ -184,6 +184,8 @@ model User {
   reviewsReceived  Review[]          @relation("ReviewSeller")
   reports          Report[]
   auditLogs        AuditLog[]
+  blogPosts        BlogPost[]
+  contactMessages  ContactMessage[]
 
   @@index([status], map: "users_status_idx")
   @@map("users")
@@ -576,4 +578,69 @@ model AuditLog {
 
   @@index([createdAt(sort: Desc)], map: "audit_logs_created_idx")
   @@map("audit_logs")
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Content: blog, contact inbox, newsletter
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum ContactStatus {
+  new
+  read
+  resolved
+
+  @@map("contact_status")
+}
+
+model BlogPost {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorId    String?   @map("author_id") @db.Uuid
+  title       String
+  slug        String    @unique
+  excerpt     String
+  /// Plain text; blank lines separate paragraphs, lines starting with "## " are sub-headings.
+  content     String
+  coverUrl    String?   @map("cover_url")
+  category    String    @default("Cat care")
+  readMinutes Int       @default(3) @map("read_minutes")
+  isPublished Boolean   @default(true) @map("is_published")
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([isPublished, publishedAt(sort: Desc)], map: "blog_posts_published_idx")
+  @@map("blog_posts")
+}
+
+model ContactMessage {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?       @map("user_id") @db.Uuid
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    ContactStatus @default(new)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)], map: "contact_messages_status_idx")
+  @@map("contact_messages")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("newsletter_subscribers")
 }

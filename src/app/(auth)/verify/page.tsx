@@ -15,7 +15,7 @@ export default async function VerifyPage({ searchParams }: Props) {
 
   return (
     <>
-      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-100 text-brand-600">
+      <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-100 text-brand-600">
         <ShieldCheck className="h-6 w-6" />
       </span>
       <h1 className="mt-4 font-display text-2xl font-bold">Verify your phone</h1>

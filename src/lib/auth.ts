@@ -13,7 +13,8 @@ class BannedError extends CredentialsSignin {
 export const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+  // Tokens expire after 7 days; expired sessions fall through to requireUser(), which redirects to /login.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 },
   pages: { signIn: "/login" },
   trustHost: true,
   providers: [
@@ -28,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!ok) return null;
         if (user.status === "banned") throw new BannedError();
-        return { id: user.id, name: user.name, email: user.email, image: user.avatar };
+        return { id: user.id, name: user.name, email: user.email, image: null };
       },
     }),
   ],

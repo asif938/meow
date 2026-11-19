@@ -9,7 +9,7 @@ export type UploadedImage = { url: string; publicId?: string | null; hash?: stri
 
 type Signature = { cloudName: string; apiKey: string; folder: string; timestamp: number; signature: string };
 
-export async function uploadToCloudinary(file: File, purpose: "listing" | "verification" = "listing"): Promise<UploadedImage> {
+export async function uploadToCloudinary(file: File, purpose: "listing" | "verification" | "avatar" | "blog" = "listing"): Promise<UploadedImage> {
   const sigRes = await fetch("/api/uploads/sign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export function ImageUploader({
               <button
                 type="button"
                 onClick={() => move(i, 0)}
-                className="absolute left-1.5 top-1.5 grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-white/90 text-ink"
+                className="absolute left-1.5 top-1.5 grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-surface/90 text-ink"
                 aria-label="Make cover photo"
               >
                 <Star className="h-3.5 w-3.5" />
@@ -99,7 +99,7 @@ export function ImageUploader({
             <button
               type="button"
               onClick={() => onChange(value.filter((_, idx) => idx !== i))}
-              className="absolute right-1.5 top-1.5 grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-white/90 text-red-600"
+              className="absolute right-1.5 top-1.5 grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-surface/90 text-red-600 dark:text-red-400"
               aria-label="Remove photo"
             >
               <X className="h-4 w-4" />
@@ -156,7 +156,7 @@ export function ImageUploader({
           </div>
         </div>
       )}
-      <p className={cn("text-xs", error ? "text-red-600" : "text-muted")}>
+      <p className={cn("text-xs", error ? "text-red-600 dark:text-red-400" : "text-muted")}>
         {error ?? `${value.length}/${max} photos · The first photo is the cover. Clear, well-lit photos sell faster.`}
       </p>
     </div>

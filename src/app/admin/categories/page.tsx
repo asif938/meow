@@ -9,14 +9,14 @@ export default async function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <details className="rounded-2xl border border-line bg-white p-4">
+      <details className="rounded-xl border border-line bg-surface p-4">
         <summary className="cursor-pointer font-semibold">+ Add category</summary>
         <CategoryForm parents={parents} />
       </details>
 
       <div className="space-y-2">
         {parents.map((p) => (
-          <div key={p.id} className="rounded-2xl border border-line bg-white">
+          <div key={p.id} className="rounded-xl border border-line bg-surface">
             <CategoryRow category={p} parents={parents} />
             {all
               .filter((c) => c.parentId === p.id)

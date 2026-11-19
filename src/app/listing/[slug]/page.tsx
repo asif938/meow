@@ -89,7 +89,7 @@ export default async function ListingPage({ params }: Props) {
         ["Age", formatAge(cd.ageMonths)],
         ["Gender", cd.gender === "male" ? "Male" : "Female"],
         ["Color", cd.color || "—"],
-        ["Vaccinated", cd.vaccinated ? <span className="font-medium text-emerald-700">Yes</span> : <span className="text-red-600">No</span>],
+        ["Vaccinated", cd.vaccinated ? <span className="font-medium text-emerald-700">Yes</span> : <span className="text-red-600 dark:text-red-400">No</span>],
         ["Neutered / spayed", cd.neutered ? "Yes" : "No"],
       ]
     : [
@@ -245,7 +245,7 @@ export default async function ListingPage({ params }: Props) {
                 <Link href={`/dashboard/listings/${listing.id}/edit`} className={buttonClass("primary", "lg", "w-full")}>
                   <Pencil className="h-4 w-4" /> Edit listing
                 </Link>
-                <Link href="/dashboard" className={buttonClass("outline", "md", "w-full")}>Manage in dashboard</Link>
+                <Link href="/dashboard/listings" className={buttonClass("outline", "md", "w-full")}>Manage in dashboard</Link>
               </div>
             ) : listing.status === "active" ? (
               <div className="hidden space-y-2 lg:block">
@@ -333,7 +333,7 @@ export default async function ListingPage({ params }: Props) {
 
       {/* Sticky mobile CTA */}
       {!isOwner && listing.status === "active" && (
-        <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-white/95 p-3 backdrop-blur lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-surface/95 p-3 backdrop-blur lg:hidden">
           <div className="flex-1">{chatButton}</div>
           {isAdoption && !myRequest && (
             <a href="#adopt" className={buttonClass("teal", "lg", "flex-1")}>Adopt</a>

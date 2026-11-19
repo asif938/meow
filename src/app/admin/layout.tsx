@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/session";
-import { AdminNav } from "./admin-nav";
+import { SidebarShell, type SidebarItem } from "@/components/dashboard/sidebar-shell";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
+const ITEMS: SidebarItem[] = [
+  { href: "/admin", label: "Overview", icon: "overview", exact: true },
+  { href: "/admin/users", label: "Manage Users", icon: "users" },
+  { href: "/admin/listings", label: "Manage Items", icon: "items" },
+  { href: "/admin/sellers", label: "Seller verification", icon: "sellers" },
+  { href: "/admin/reports", label: "Reports", icon: "reports" },
+  { href: "/admin/categories", label: "Categories", icon: "categories" },
+  { href: "/admin/blog", label: "Blog posts", icon: "blog" },
+  { href: "/admin/messages", label: "Messages", icon: "messages" },
+  { href: "/admin/settings", label: "Settings", icon: "settings" },
+];
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   return (
-    <div className="container-page py-6 sm:py-8">
-      <h1 className="mb-4 font-display text-2xl font-bold">Admin</h1>
-      <AdminNav />
-      <div className="mt-6">{children}</div>
-    </div>
+    <SidebarShell title="Admin" subtitle={admin.email} items={ITEMS}>
+      {children}
+    </SidebarShell>
   );
 }

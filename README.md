@@ -36,11 +36,17 @@ Bangladesh-first marketplace for cats. Buy a cat, adopt one, or buy and sell cat
 - **Cash-on-delivery orders:** available for supplies from verified shops only. Stock is reserved inside a database transaction, so two buyers can't oversell the last item. Status flow: pending → confirmed → shipped → delivered, or cancelled (which restocks the item).
 - **Reviews:** allowed only after a delivered order or a completed adoption, once each.
 - **Seller verification:** NID, trade licence or organisation proof goes to an admin queue. Approval shows a verified badge.
-- **Admin panel:** overview with KPI progress, listing moderation queue (approve, reject, feature), seller verification, reports (with takedown or ban), user ban/unban and a category tree editor. Every admin action is written to `audit_logs`.
-- **Seller dashboard:** searchable, virtualized list of your listings, status filters, multi-select with CSV export, a lazy-loaded analytics panel, and incoming orders and adoption requests.
+- **Role-based dashboards (sidebar layout):** `/dashboard` for every user (Overview with live KPI cards and Bar, Line and Pie charts, My Items, Orders and requests, Wishlist, Shop verification, Profile, Settings) and `/admin` for admins (Overview with charts, Manage Users, Manage Items, Seller verification, Reports, Categories, Blog posts, Contact messages, Settings). Tables are server-driven: search, filters, sorting and pagination live in the URL, with View, Edit and Delete actions (delete asks for confirmation in a modal). Every admin action is written to `audit_logs`.
+- **Profile:** edit name, shop name and bio, upload a profile photo (signed upload to Cloudinary; the button is disabled until the Cloudinary env vars are set), and change the password.
+- **Blog:** public `/blog` with search, categories and pagination, article pages with related posts, and an admin editor. The latest posts appear on the home page.
+- **Contact and newsletter:** the contact form and newsletter sign-up save to Postgres (`contact_messages`, `newsletter_subscribers`). Admins read and resolve messages in `/admin/messages`.
+- **Help centre:** `/help` with topic shortcuts and a FAQ shared with the home page.
+- **Home page:** hero (65vh) with an auto-advancing carousel of live listings, then categories, featured cats, adoption, live statistics, how it works, new arrivals, trusted sellers, testimonials (real reviews), blog preview, FAQ, newsletter and a call to action. Sections with no data hide themselves, so nothing is a placeholder.
+- **Navbar:** sticky and full width. Logged out: Home, Explore (mega menu), Blog, About, Login. Logged in: Home, Explore, Dashboard, Blog, Profile (dropdown), Logout. Hamburger drawer below 1024px.
+- **Dark mode:** light and dark themes with a toggle in the header and a System option in Settings. The choice is saved in `localStorage` and applied before first paint, so there is no flash.
 - **i18n:** English and Bangla, switchable from the header (cookie-based).
 - **SEO:** sitemap, robots, canonical URLs, Open Graph tags and `Product` JSON-LD on listing pages.
-- **Static pages:** about, safety and prohibited items, terms and privacy. The terms and privacy pages are templates, so have a lawyer review them.
+- **Static pages:** about, contact, help, safety and prohibited items, terms and privacy. The terms and privacy pages are templates, so have a lawyer review them.
 
 ---
 
@@ -152,6 +158,7 @@ npm run db:deploy
 | `npm run db:deploy` | Apply existing migrations (production, CI) |
 | `npm run db:seed` | Seed categories, locations and demo data (`-- --reset` wipes first) |
 | `npm run db:studio` | Open Prisma Studio |
+| `npm run db:demo-passwords` | Set the two demo-login accounts back to the public demo password (see Demo accounts) |
 
 On low-RAM machines, `LOW_MEM_BUILD=1 npm run build` stops Next from spawning parallel build workers.
 
@@ -162,9 +169,9 @@ On low-RAM machines, `LOW_MEM_BUILD=1 npm run build` stops Next from spawning pa
 ```
 prisma/
   schema.prisma              data model
-  migrations/0_init/         initial migration (hand-patched, see above)
+  migrations/                0_init (hand-patched, see above), 1_blog_contact_newsletter
 prisma.config.ts             Prisma CLI config
-scripts/seed.ts              database seed
+scripts/seed.ts              database seed (+ seed-content.ts: blog posts and reviews)
 src/
   app/                       routes (App Router)
     (auth)/                  login, register, phone verification
@@ -172,10 +179,11 @@ src/
     listing/[slug]/          listing detail + order and adoption forms
     seller/[username]/       public seller profile
     sell/new/                5-step sell wizard
-    dashboard/               seller dashboard, orders, shop verification
+    dashboard/               overview + charts, my items, orders, shop, profile, settings
+    blog/, help/, contact/   content pages
     messages/                inbox and chat threads
     account/                 profile, wishlist, my orders and requests
-    admin/                   moderation, sellers, reports, users, categories
+    admin/                   overview, users, items, sellers, reports, categories, blog, messages, settings
     api/                     JSON endpoints (see HTTP API)
     sitemap.ts, robots.ts    SEO
   actions/                   server actions (all writes)
@@ -192,7 +200,10 @@ src/
     i18n.ts                  English and Bangla strings
     notify.ts                email (Resend) and SMS senders
     cloudinary.ts, images.ts image URLs and allowed hosts
-    perf-data.ts             synthetic rows for the ?demo= performance mode
+    table.ts                 URL state (search, filter, sort, page) for data tables
+    use-action-form.ts       client validation + server action hook used by every form
+    dashboard-stats.ts       aggregate queries for dashboard cards and charts
+    content-queries.ts       blog, testimonials, trusted sellers, live stats
 ```
 
 ---
@@ -284,11 +295,23 @@ The app is built for Vercel + Neon, but any Node host works.
 
 ---
 
+## Design system
+
+- **Colours:** three brand colours (orange for actions, teal for adoption/secondary, neutral ink for text and surfaces). Red, green, amber and blue appear only for status feedback. Tokens live in `src/app/globals.css`; `.dark` swaps the neutrals and re-tints the light shades so dark mode keeps proper contrast.
+- **Spacing and radius:** Tailwind's 4px grid, and a single radius (`rounded-xl`) for buttons, inputs, cards and modals.
+- **Typography:** `text-h1`, `text-h2`, `text-h3` and `text-lead` utilities in `globals.css`.
+- **Reusable components:** Button, Input, Textarea, Select, Field, Card, Badge, Alert, Table, Modal, Dropdown, Skeleton, Spinner and EmptyState in `src/components/ui`.
+- **Forms:** every form validates on the client with the same zod schema the server uses, then validates again on the server. They show per-field errors, a success or error message, a loading state, and labels tied to inputs.
+
+---
+
 ## Performance
 
-The seller dashboard and admin users page were optimized for large lists (virtualized rows, debounced search, memoized rows, lazy-loaded panels, server-side pre-formatting). On 1,500 synthetic rows the dashboard's mobile Lighthouse score went from 27 to 92 and its LCP from 9.1 s to 1.2 s. The method, numbers and remaining limitations are in [`PERFORMANCE.md`](PERFORMANCE.md), with the raw reports in `perf/`.
-
-To try the large-list mode locally, start the server with `PERF_DEMO=1` and open `/dashboard?demo=1500` or `/admin/users?demo=1500`. This shows synthetic rows, not database data, and is ignored when `PERF_DEMO` isn't set, so it is inert in production.
+- Images go through `next/image` (Cloudinary `f_auto,q_auto` transforms) and are lazy-loaded; only the first hero slide is prioritised.
+- Recharts is loaded with `next/dynamic` (`ssr: false`), so the chart code only ships on dashboard pages.
+- Server components fetch data; client components are limited to interactive islands.
+- `console.log/info/debug` are stripped from production bundles (`compiler.removeConsole`).
+- Skeleton loaders on listing pages (`loading.tsx`).
 
 ---
 
@@ -310,5 +333,7 @@ To try the large-list mode locally, start the server with `PERF_DEMO=1` and open
 ---
 
 ## Not built yet
+
+An Express backend. The app uses Next.js server actions and route handlers with Prisma and Neon; a separate Express + PostgreSQL API is planned.
 
 Multi-seller cart, bKash / Nagad / SSLCommerz payments, price-drop alerts, courier integration, vet and grooming directory, PWA, and real-time chat (Pusher or Ably instead of polling). Sentry, Vitest and Playwright are not set up yet, so there are no automated tests.

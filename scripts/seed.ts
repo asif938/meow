@@ -12,6 +12,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import type { ListingCondition, ListingType, Role } from "../src/generated/prisma/client";
 import { DHAKA_AREAS, DIVISIONS } from "../src/lib/constants";
+import { seedContent } from "./seed-content";
 
 if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("ep-xxx")) {
   console.error("Set DATABASE_URL in .env.local first.");
@@ -215,7 +216,7 @@ async function upsertUser(u: {
 async function main() {
   if (process.argv.includes("--reset")) {
     console.log("Resetting demo data…");
-    await db.$executeRaw`truncate listings, conversations, messages, adoption_requests, orders, order_items, wishlists, reviews, reports, audit_logs, otp_codes cascade`;
+    await db.$executeRaw`truncate listings, conversations, messages, adoption_requests, orders, order_items, wishlists, reviews, reports, audit_logs, otp_codes, blog_posts, contact_messages, newsletter_subscribers cascade`;
     await db.$executeRaw`truncate users cascade`;
   }
 
@@ -266,6 +267,12 @@ async function main() {
   });
   const tanvir = await upsertUser({ name: "Tanvir Ahmed", username: "tanvir", email: "tanvir@meow.com.bd", phone: "+8801744444444", roles: ["buyer", "seller"] });
   console.log("✓ users");
+
+  await seedContent(
+    db,
+    { [admin.email]: admin, [shop.email]: shop, [nusrat.email]: nusrat, [rescue.email]: rescue, [tanvir.email]: tanvir },
+    admin.id,
+  );
 
   if ((await db.listing.count()) > 0) {
     console.log("Listings already exist — skipping demo listings. Use --reset to start over.");

@@ -24,7 +24,7 @@ export function WishlistButton({ listingId, initial, large }: { listingId: strin
         })
       }
       className={cn(
-        "grid cursor-pointer place-items-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur transition hover:scale-110",
+        "grid cursor-pointer place-items-center rounded-full bg-surface/90 text-ink shadow-sm backdrop-blur transition hover:scale-110",
         large ? "h-11 w-11 border border-line" : "h-8 w-8",
       )}
     >

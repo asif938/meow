@@ -5,12 +5,12 @@ type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger" | 
 type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-brand-500 text-white hover:bg-brand-600 shadow-sm",
+  primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-sm",
   secondary: "bg-brand-100 text-brand-700 hover:bg-brand-200",
-  outline: "border border-line bg-white text-ink hover:bg-brand-50",
+  outline: "border border-line bg-surface text-ink hover:bg-brand-50",
   ghost: "text-ink hover:bg-brand-50",
   danger: "bg-red-600 text-white hover:bg-red-700",
-  teal: "bg-teal-brand text-white hover:bg-teal-800",
+  teal: "bg-teal-brand text-white hover:brightness-110",
 };
 const sizes: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-sm",
@@ -21,7 +21,7 @@ const sizes: Record<ButtonSize, string> = {
 
 export function buttonClass(variant: ButtonVariant = "primary", size: ButtonSize = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 cursor-pointer whitespace-nowrap",
+    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 cursor-pointer whitespace-nowrap",
     variants[variant],
     sizes[size],
     className,
@@ -32,23 +32,31 @@ export function Button({
   variant,
   size,
   className,
+  loading,
+  children,
+  disabled,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }) {
-  return <button className={buttonClass(variant, size, className)} {...props} />;
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize; loading?: boolean }) {
+  return (
+    <button className={buttonClass(variant, size, className)} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
+      {loading && <Spinner />}
+      {children}
+    </button>
+  );
 }
 
 const field =
-  "w-full rounded-xl border border-line bg-white px-3.5 text-sm text-ink placeholder:text-muted/70 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60";
+  "w-full rounded-xl border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-muted/70 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60";
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ className, ...props }: React.ComponentProps<"input">) {
   return <input className={cn(field, "h-11", className)} {...props} />;
 }
 
-export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return <textarea className={cn(field, "min-h-28 py-2.5", className)} {...props} />;
 }
 
-export function Select({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({ className, ...props }: React.ComponentProps<"select">) {
   return <select className={cn(field, "h-11 pr-8", className)} {...props} />;
 }
 
@@ -76,7 +84,11 @@ export function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && (
+        <p id={htmlFor ? `${htmlFor}-error` : undefined} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -106,7 +118,7 @@ export function Badge({
 }
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-[var(--radius-card)] border border-line bg-white", className)} {...props} />;
+  return <div className={cn("rounded-xl border border-line bg-surface", className)} {...props} />;
 }
 
 export function Alert({
@@ -135,7 +147,7 @@ export function EmptyState({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line bg-white px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line bg-surface px-6 py-14 text-center">
       {icon && <div className="mb-3 text-brand-400">{icon}</div>}
       <p className="font-display text-lg font-semibold">{title}</p>
       {description && <p className="mt-1 max-w-md text-sm text-muted">{description}</p>}
@@ -154,4 +166,54 @@ export function PageHeader({ title, description, actions }: { title: string; des
       {actions && <div className="flex gap-2">{actions}</div>}
     </div>
   );
+}
+
+/* ----------------------------- Skeleton / Spinner ----------------------------- */
+
+export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div aria-hidden className={cn("animate-pulse rounded-lg bg-stone-100", className)} {...props} />;
+}
+
+export function Spinner({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      className={cn("h-4 w-4 animate-spin", className)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+    >
+      <path d="M12 3a9 9 0 1 0 9 9" />
+    </svg>
+  );
+}
+
+/* ----------------------------------- Table ----------------------------------- */
+
+/** Horizontally scrollable on small screens so tables never cause page-level overflow. */
+export function Table({ className, children, ...props }: React.HTMLAttributes<HTMLTableElement>) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+      <table className={cn("w-full min-w-[640px] text-left text-sm", className)} {...props}>
+        {children}
+      </table>
+    </div>
+  );
+}
+export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead className={cn("border-b border-line bg-stone-50 text-xs uppercase text-muted", className)} {...props} />;
+}
+export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className={cn("divide-y divide-line", className)} {...props} />;
+}
+export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
+  return <tr className={cn("align-middle", className)} {...props} />;
+}
+export function TH({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return <th scope="col" className={cn("px-4 py-3 font-medium", className)} {...props} />;
+}
+export function TD({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return <td className={cn("px-4 py-3", className)} {...props} />;
 }

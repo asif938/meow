@@ -34,7 +34,7 @@ export default async function AdminSellersPage({ searchParams }: Props) {
           {rows.map((p) => {
             const doc = p.type === "business" ? p.tradeLicenseUrl : p.type === "shelter" ? p.orgProofUrl : p.nidUrl;
             return (
-              <li key={p.userId} className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4 md:flex-row">
+              <li key={p.userId} className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4 md:flex-row">
                 {doc && (
                   <a href={doc} target="_blank" rel="noreferrer" className="shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -53,7 +53,7 @@ export default async function AdminSellersPage({ searchParams }: Props) {
                   <p className="text-muted">{p.user.email} · {p.user.phone ?? "no phone"} {p.user.isPhoneVerified && "✓"}</p>
                   <p className="text-muted">Member since {new Date(p.user.createdAt).toLocaleDateString("en-GB")}</p>
                   {p.bio && <p className="line-clamp-2">{p.bio}</p>}
-                  {p.rejectionReason && <p className="text-xs text-red-600">Reason: {p.rejectionReason}</p>}
+                  {p.rejectionReason && <p className="text-xs text-red-600 dark:text-red-400">Reason: {p.rejectionReason}</p>}
                 </div>
                 <form action={reviewSellerAction} className="flex shrink-0 flex-col gap-2 md:w-56">
                   <input type="hidden" name="userId" value={p.userId} />

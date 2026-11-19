@@ -44,7 +44,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
             const target = r.targetType === "user" ? userMap.get(r.targetId) : undefined;
             const reporter = userMap.get(r.reporterId);
             return (
-              <li key={r.id} className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4 md:flex-row">
+              <li key={r.id} className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4 md:flex-row">
                 <div className="min-w-0 flex-1 space-y-1 text-sm">
                   <div className="flex items-center gap-2">
                     <Badge tone="red">{r.reason}</Badge>

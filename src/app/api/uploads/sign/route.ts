@@ -9,6 +9,14 @@ export async function POST(req: NextRequest) {
   if (!cloudinaryEnabled) return NextResponse.json({ error: "Image uploads are not configured" }, { status: 503 });
 
   const { purpose } = (await req.json().catch(() => ({}))) as { purpose?: string };
-  const folder = purpose === "verification" ? `meow/verification/${user.id}` : `meow/listings/${user.id}`;
+  if (purpose === "blog" && !user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const folder =
+    purpose === "verification"
+      ? `meow/verification/${user.id}`
+      : purpose === "avatar"
+        ? `meow/avatars/${user.id}`
+        : purpose === "blog"
+          ? "meow/blog"
+          : `meow/listings/${user.id}`;
   return NextResponse.json(signUpload(folder));
 }

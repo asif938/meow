@@ -143,3 +143,44 @@ export async function saveCategoryAction(formData: FormData) {
   revalidatePath("/admin/categories");
   revalidatePath("/", "layout");
 }
+
+export async function deleteListingAdminAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = str(formData, "id");
+  const listing = await db.listing.findUnique({ where: { id }, select: { slug: true, title: true } });
+  if (!listing) return;
+  await db.listing.delete({ where: { id } });
+  await audit(admin.id, "listing.delete", "listing", id, { title: listing.title });
+  revalidatePath("/admin/listings");
+  revalidatePath("/admin");
+  revalidatePath(`/listing/${listing.slug}`);
+}
+
+export async function deleteUserAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = str(formData, "id");
+  if (id === admin.id) throw new Error("You cannot delete your own account.");
+  const user = await db.user.findUnique({ where: { id }, select: { email: true } });
+  if (!user) return;
+  // Orders keep a restrictive FK on purpose (financial history): refuse instead of half-deleting.
+  const orders = await db.order.count({ where: { OR: [{ buyerId: id }, { sellerId: id }] } });
+  if (orders > 0) throw new Error("This user has orders. Ban the account instead of deleting it.");
+  await db.user.delete({ where: { id } });
+  await audit(admin.id, "user.delete", "user", id, { email: user.email });
+  revalidatePath("/admin/users");
+  revalidatePath("/admin");
+}
+
+/** Edit modal on Manage Users: ban state and the admin role. */
+export async function updateUserAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const userId = str(formData, "userId");
+  if (userId === admin.id) return;
+  const makeAdmin = formData.get("isAdmin") === "on";
+  const hasAdmin = await db.userRole.findUnique({ where: { userId_role: { userId, role: "admin" } } });
+  if (makeAdmin && !hasAdmin) await db.userRole.create({ data: { userId, role: "admin" } });
+  if (!makeAdmin && hasAdmin) await db.userRole.delete({ where: { userId_role: { userId, role: "admin" } } });
+  if (makeAdmin !== Boolean(hasAdmin)) await audit(admin.id, makeAdmin ? "user.make_admin" : "user.remove_admin", "user", userId);
+  await setUserStatusAction(formData);
+  revalidatePath("/admin/users");
+}

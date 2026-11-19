@@ -28,7 +28,7 @@ export function BottomSheet({ label, title, children }: { label: string; title: 
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title}>
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl">
+          <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-surface p-5 pb-8 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <p className="font-display text-lg font-bold">{title}</p>
               <button type="button" onClick={() => setOpen(false)} className={buttonClass("ghost", "icon")} aria-label="Close">

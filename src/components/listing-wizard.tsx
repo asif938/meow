@@ -127,7 +127,7 @@ export function ListingWizard({
         setError(res.error);
         return;
       }
-      router.push(`/dashboard?saved=${res.status}`);
+      router.push(`/dashboard/listings?saved=${res.status}`);
       router.refresh();
     });
   }
@@ -161,7 +161,7 @@ export function ListingWizard({
         ))}
       </ol>
 
-      <div className="rounded-[var(--radius-card)] border border-line bg-white p-5 sm:p-8">
+      <div className="rounded-xl border border-line bg-surface p-5 sm:p-8">
         {step === 0 && (
           <div className="space-y-6">
             <h2 className="font-display text-xl font-bold">What are you posting?</h2>
@@ -412,7 +412,7 @@ export function ListingWizard({
             <div className="flex gap-4">
               {v.images[0] && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={v.images[0].url} alt="" className="h-28 w-28 shrink-0 rounded-2xl object-cover" />
+                <img src={v.images[0].url} alt="" className="h-28 w-28 shrink-0 rounded-xl object-cover" />
               )}
               <div className="min-w-0 space-y-1">
                 <p className="font-semibold">{v.title}</p>
@@ -488,7 +488,7 @@ function TypeCard({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "relative flex cursor-pointer flex-col items-start gap-2 rounded-2xl border-2 p-4 text-left transition",
+        "relative flex cursor-pointer flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition",
         active ? "border-brand-500 bg-brand-50" : "border-line hover:border-brand-200",
       )}
     >

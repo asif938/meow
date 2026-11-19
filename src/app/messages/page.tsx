@@ -25,7 +25,7 @@ export default async function MessagesPage() {
           action={<Link href="/cats" className={buttonClass()}>Browse cats</Link>}
         />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
           {inbox.map((c) => {
             const other = c.buyerId === user.id ? c.sellerName : c.buyerName;
             return (

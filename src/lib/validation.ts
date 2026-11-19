@@ -1,15 +1,59 @@
 import { z } from "zod";
 import { RULES } from "./constants";
 
+/** 8+ characters with at least one letter and one number. */
+function passwordRule() {
+  return z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password is too long")
+    .regex(/[A-Za-z]/, "Password needs at least one letter")
+    .regex(/\d/, "Password needs at least one number");
+}
+
 export const registerSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
   email: z.string().trim().toLowerCase().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters").max(100),
+  password: passwordRule(),
 });
 
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(1),
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+  password: z.string().min(1, "Enter your password"),
+});
+
+export const contactSchema = z.object({
+  name: z.string().trim().min(2, "Please enter your name").max(80),
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+  subject: z.string().trim().min(3, "Subject is too short").max(120),
+  message: z.string().trim().min(20, "Please write at least 20 characters").max(3000, "Message is too long"),
+});
+
+export const newsletterSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+});
+
+export const profileSchema = z.object({
+  name: z.string().trim().min(2, "Name is too short").max(80),
+  shopName: z.string().trim().max(80).optional(),
+  bio: z.string().trim().max(1000, "Bio is too long").optional(),
+});
+
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().optional(),
+    newPassword: passwordRule(),
+    confirmPassword: z.string().min(1, "Confirm your new password"),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, { message: "Passwords do not match", path: ["confirmPassword"] });
+
+export const blogPostSchema = z.object({
+  title: z.string().trim().min(5, "Title must be at least 5 characters").max(140),
+  excerpt: z.string().trim().min(20, "Excerpt must be at least 20 characters").max(300),
+  content: z.string().trim().min(100, "Write at least 100 characters").max(20000),
+  category: z.string().trim().min(2, "Category is required").max(40),
+  coverUrl: z.string().trim().url("Cover must be a valid image URL").optional().or(z.literal("")),
+  isPublished: z.boolean().default(true),
 });
 
 const imageSchema = z.object({

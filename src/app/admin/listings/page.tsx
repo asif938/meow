@@ -1,105 +1,130 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Cat } from "lucide-react";
 import { db } from "@/db";
-import type { ListingStatus } from "@/db/types";
-import { moderateListingAction } from "@/actions/admin";
+import type { Prisma } from "@/db";
+import { deleteListingAdminAction } from "@/actions/admin";
 import { cldTransform } from "@/lib/cloudinary";
-import { findBannedWords } from "@/lib/moderation";
-import { formatAge, formatBDT, timeAgo } from "@/lib/utils";
-import { Badge, EmptyState, Input, buttonClass } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { parseTableQuery, PAGE_SIZE_TABLE, type SearchParams } from "@/lib/table";
+import { formatBDT, timeAgo } from "@/lib/utils";
+import { Badge, EmptyState, PageHeader, Table, TBody, TD, THead, TH, TR } from "@/components/ui";
+import { Pagination } from "@/components/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { SortTH } from "@/components/data-table/sort-header";
+import { DeleteAction, EditAction, ViewAction } from "@/components/data-table/row-actions";
 
-const STATUSES: ListingStatus[] = ["pending", "active", "rejected", "sold", "adopted", "draft"];
+const STATUSES = ["pending", "active", "rejected", "sold", "adopted", "draft"] as const;
+const TYPES = ["cat", "adoption", "supply"] as const;
+const SORTS = ["title", "price", "status", "viewCount", "createdAt"] as const;
+const TONE = { draft: "gray", pending: "amber", active: "green", sold: "blue", adopted: "teal", rejected: "red" } as const;
 
-type Props = { searchParams: Promise<{ status?: string }> };
+export default async function AdminListingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams;
+  const query = parseTableQuery(sp, { sorts: SORTS, defaultSort: "createdAt", filters: { status: STATUSES, type: TYPES } });
 
-export default async function AdminListingsPage({ searchParams }: Props) {
-  const { status: raw } = await searchParams;
-  const status = STATUSES.find((s) => s === raw) ?? "pending";
-
-  const rows = await db.listing.findMany({
-    where: { status },
-    include: {
-      images: { take: 4, orderBy: { position: "asc" } },
-      catDetails: true,
-      category: { select: { name: true } },
-      seller: { select: { name: true, username: true, sellerProfile: { select: { verificationStatus: true, type: true } } } },
-    },
-    // Oldest first for the review queue, newest first everywhere else.
-    orderBy: { createdAt: status === "pending" ? "asc" : "desc" },
-    take: 50,
-  });
+  const where: Prisma.ListingWhereInput = {
+    ...(query.filters.status ? { status: query.filters.status as (typeof STATUSES)[number] } : {}),
+    ...(query.filters.type ? { type: query.filters.type as (typeof TYPES)[number] } : {}),
+    ...(query.q
+      ? { OR: [{ title: { contains: query.q, mode: "insensitive" } }, { seller: { name: { contains: query.q, mode: "insensitive" } } }] }
+      : {}),
+  };
+  const [rows, total] = await Promise.all([
+    db.listing.findMany({
+      where,
+      orderBy: { [query.sort]: query.dir },
+      skip: (query.page - 1) * PAGE_SIZE_TABLE,
+      take: PAGE_SIZE_TABLE,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        type: true,
+        status: true,
+        price: true,
+        viewCount: true,
+        isFeatured: true,
+        createdAt: true,
+        category: { select: { name: true } },
+        seller: { select: { name: true, username: true } },
+        catDetails: { select: { adoptionFee: true } },
+        images: { select: { url: true }, orderBy: [{ isCover: "desc" }, { position: "asc" }], take: 1 },
+      },
+    }),
+    db.listing.count({ where }),
+  ]);
+  const th = { basePath: "/admin/listings", searchParams: sp, query };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {STATUSES.map((s) => (
-          <Link key={s} href={`/admin/listings?status=${s}`} className={cn(buttonClass(s === status ? "primary" : "outline", "sm"), "capitalize")}>
-            {s}
-          </Link>
-        ))}
-      </div>
-
+    <div className="space-y-5">
+      <PageHeader title="Manage items" description="Review new listings, feature the best ones and remove anything that breaks the rules." />
+      <TableToolbar
+        placeholder="Search title or seller…"
+        filters={[
+          { name: "status", label: "Status", options: STATUSES.map((s) => ({ value: s, label: s })) },
+          { name: "type", label: "Type", options: TYPES.map((s) => ({ value: s, label: s })) },
+        ]}
+      />
       {rows.length === 0 ? (
-        <EmptyState title={`No ${status} listings`} description="All caught up 🎉" />
+        <EmptyState title="No items found" description="Try a different search or clear the filters." />
       ) : (
-        <ul className="space-y-3">
-          {rows.map((l) => {
-            const flags = findBannedWords(l.title, l.description);
-            return (
-              <li key={l.id} className="rounded-2xl border border-line bg-white p-4">
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <div className="flex shrink-0 gap-1.5">
-                    {l.images.map((img) => (
-                      <a key={img.id} href={img.url} target="_blank" rel="noreferrer" className="relative h-20 w-20 overflow-hidden rounded-lg bg-stone-100">
-                        <Image src={cldTransform(img.url, "f_auto,q_auto,c_fill,w_160,h_160")} alt="" fill sizes="80px" className="object-cover" />
-                      </a>
-                    ))}
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-1 text-sm">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone="brand" className="capitalize">{l.type}</Badge>
-                      {l.condition && <Badge>{l.condition}</Badge>}
-                      <span className="text-xs text-muted">{l.category.name} · {timeAgo(l.createdAt)}</span>
-                      {l.isFeatured && <Badge tone="amber">Featured</Badge>}
+        <>
+          <Table className="min-w-[820px]">
+            <THead>
+              <TR>
+                <SortTH label="Item" field="title" {...th} />
+                <TH>Seller</TH>
+                <SortTH label="Status" field="status" {...th} />
+                <SortTH label="Price" field="price" {...th} />
+                <SortTH label="Views" field="viewCount" {...th} />
+                <SortTH label="Posted" field="createdAt" {...th} />
+                <TH className="text-right">Actions</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {rows.map((r) => (
+                <TR key={r.id}>
+                  <TD>
+                    <div className="flex items-center gap-3">
+                      <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-brand-50 text-brand-300">
+                        {r.images[0] ? (
+                          <Image src={cldTransform(r.images[0].url, "f_auto,q_auto,c_fill,w_96,h_96")} alt="" fill sizes="48px" className="object-cover" />
+                        ) : (
+                          <Cat className="h-5 w-5" aria-hidden />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <Link href={`/admin/listings/${r.id}`} className="block max-w-[15rem] truncate font-medium hover:underline">{r.title}</Link>
+                        <p className="text-xs text-muted"><span className="capitalize">{r.type}</span> · {r.category.name}</p>
+                      </div>
                     </div>
-                    <Link href={`/listing/${l.slug}`} className="block font-semibold hover:underline">{l.title}</Link>
-                    <p className="text-muted">
-                      {l.type === "adoption" ? `Fee ${formatBDT(l.catDetails?.adoptionFee ?? 0)}` : formatBDT(l.price)} · by{" "}
-                      <Link href={`/seller/${l.seller.username}`} className="underline">{l.seller.name}</Link>{" "}
-                      ({l.seller.sellerProfile?.verificationStatus === "approved" ? `verified ${l.seller.sellerProfile.type}` : "unverified"})
-                    </p>
-                    {l.catDetails && (
-                      <p className="text-muted">
-                        {l.catDetails.breed} · {formatAge(l.catDetails.ageMonths)} · {l.catDetails.vaccinated ? "vaccinated" : "NOT vaccinated"} · Health: {l.catDetails.healthNote}
-                      </p>
-                    )}
-                    <p className="line-clamp-2 text-muted">{l.description}</p>
-                    {flags.length > 0 && <p className="text-xs font-semibold text-red-600">Flagged words: {flags.join(", ")}</p>}
-                    {l.rejectionReason && <p className="text-xs text-red-600">Reason: {l.rejectionReason}</p>}
-                  </div>
-                  <form action={moderateListingAction} className="flex shrink-0 flex-col gap-2 md:w-56">
-                    <input type="hidden" name="id" value={l.id} />
-                    {l.status !== "active" && (
-                      <button name="decision" value="approve" className={buttonClass("teal", "sm")}>Approve</button>
-                    )}
-                    {l.status !== "rejected" && (
-                      <>
-                        <Input name="reason" placeholder="Rejection reason" className="h-9" />
-                        <button name="decision" value="reject" className={buttonClass("danger", "sm")}>Reject / take down</button>
-                      </>
-                    )}
-                    {l.status === "active" && (
-                      <button name="decision" value={l.isFeatured ? "unfeature" : "feature"} className={buttonClass("outline", "sm")}>
-                        {l.isFeatured ? "Unfeature" : "Feature on home"}
-                      </button>
-                    )}
-                  </form>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  </TD>
+                  <TD>
+                    <Link href={`/seller/${r.seller.username}`} className="hover:underline">{r.seller.name}</Link>
+                  </TD>
+                  <TD>
+                    <Badge tone={TONE[r.status]} className="capitalize">{r.status}</Badge>
+                    {r.isFeatured && <Badge tone="amber" className="ml-1">Featured</Badge>}
+                  </TD>
+                  <TD className="whitespace-nowrap">{r.type === "adoption" ? (r.catDetails?.adoptionFee ? formatBDT(r.catDetails.adoptionFee) : "Free") : formatBDT(r.price)}</TD>
+                  <TD>{r.viewCount}</TD>
+                  <TD className="whitespace-nowrap text-muted">{timeAgo(r.createdAt)}</TD>
+                  <TD>
+                    <div className="flex items-center justify-end gap-1">
+                      <ViewAction href={`/listing/${r.slug}`} label={r.title} />
+                      <EditAction href={`/admin/listings/${r.id}`} label={r.title} />
+                      <DeleteAction id={r.id} label={r.title} action={deleteListingAdminAction} />
+                    </div>
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+          <p className="text-sm text-muted">
+            Showing {(query.page - 1) * PAGE_SIZE_TABLE + 1}–{(query.page - 1) * PAGE_SIZE_TABLE + rows.length} of {total}
+          </p>
+          <Pagination basePath="/admin/listings" searchParams={sp} page={query.page} pages={Math.ceil(total / PAGE_SIZE_TABLE)} />
+        </>
       )}
     </div>
   );
